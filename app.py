@@ -71,7 +71,7 @@ tab_style = {
         'backgroundColor': '#10375c',
         'color': 'white',
         'border':'none',
-        'font-size': '26px',
+        'fontSize': '26px',
         'height': '100px',
         'width': '150px'
     },
@@ -551,7 +551,8 @@ def render_tab_content(tab):
                     dcc.Dropdown(
                         id='dropdown-group-5',
                         placeholder='選擇地區',
-                        options=[{'label': 'All', 'value': 'All'}] + [{'label': str(i), 'value': str(i)} for i in data['neighbourhood_group'].unique()],   
+                        options=[{'label': 'All', 'value': 'All'}] + [{'label': str(i), 'value': str(i)} for i in data['neighbourhood_group'].unique()],
+                        style={'margin': '10px'}   
                     )
                 ], style = drop_down_2),
             ], style = top_block),
@@ -565,6 +566,17 @@ def render_tab_content(tab):
                 dbc.Col([
                     html.H5("選取評價範圍(6代表無評價)", style=drop_down_title),
                     dcc.RangeSlider(id='slider-3', value=[1, max(data['review_rate_number'])], step=1, min=1, max=max(data['review_rate_number']))
+                ], style = drop_down_2 ),
+            ], style=top_block),
+            dbc.Row([
+                dbc.Col([
+                    html.H5("查詢ID", style=drop_down_title),
+                    dcc.Input(
+                        id='search-1',
+                        type='text',
+                        value="",  # 預設值為空值
+                        style={'margin': '15px'}
+                    )
                 ], style = drop_down_2 ),
             ], style=top_block),
             # 動態顯示搜索成果
@@ -681,8 +693,7 @@ def update_map(dropdown_value_1, slider_value_1, tab):
     ], style=map_plot_graph), items
 
 
-# 第二頁的回調函數實現
-
+# ------第一頁--------
 # 更新選單回調
 @app.callback(
     Output('dropdown-group-5', 'children'),  # 更新第二個選單的內容
@@ -808,10 +819,11 @@ def update_pie(dropdown_value, tab):
      Input('slider-3', 'value'),
      Input("prev-page", "n_clicks"),
      Input("next-page", "n_clicks"),
+     Input("search-1", "value"),
      Input('graph-tabs', 'value')],
      State("current-page", "data")
 )
-def update_result(dropdown_value_1, slider_value_1, slider_value_2, prev_page, next_page, tab, current_page):
+def update_result(dropdown_value_1, slider_value_1, slider_value_2, prev_page, next_page, search_value, tab, current_page):
     # 如果當前標籤頁不是"choose_hotel"，則不進行更新
     if tab != 'choose_hotel':
         return no_update
@@ -823,9 +835,12 @@ def update_result(dropdown_value_1, slider_value_1, slider_value_2, prev_page, n
     # 如果選擇了特定地區，進一步過濾數據
     if dropdown_value_1 and dropdown_value_1 != 'All':
         filtered_df = filtered_df[filtered_df["neighbourhood_group"] == dropdown_value_1]
+    # 如果有查詢值，直接抓取資料(第一筆)
+    if search_value:
+        filtered_df = data[data["id"] == search_value].head(1)
 
     # 計算結果數量
-    result_num = filtered_df.size
+    result_num = len(filtered_df)
     ITEMS_PER_PAGE = 10  # 每頁顯示的項目數
     total_pages = max(1, -(-result_num // ITEMS_PER_PAGE))  # 總頁數，向上取整
 
@@ -839,6 +854,8 @@ def update_result(dropdown_value_1, slider_value_1, slider_value_2, prev_page, n
     # 計算顯示範圍
     start_idx = (current_page - 1) * ITEMS_PER_PAGE
     end_idx = start_idx + ITEMS_PER_PAGE
+
+    # 篩選出範圍內的資料
     page_data = filtered_df.iloc[start_idx:end_idx]
 
     # 生成當前頁面的項目列表

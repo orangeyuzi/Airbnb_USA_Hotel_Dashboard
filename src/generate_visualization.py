@@ -29,7 +29,7 @@ def generate_map_plot(df, dropdown_value_1, slider_value_1):
         lon="long", 
         color="cancellation_policy",
         hover_name="name",            # 顯示名稱
-        hover_data={"host name": True, "review_rate_number": True, "room_type": True, "host_identity_verified": True},    # 顯示其他詳細資訊
+        hover_data={"id": True,"host name": True, "review_rate_number": True, "room_type": True, "host_identity_verified": True},    # 顯示其他詳細資訊
         center=c_lat_lon,
         zoom=12, 
         color_discrete_map=color_map,
